@@ -1,73 +1,50 @@
 import React, { useState } from 'react';
-//import ReactDOM  from 'react-dom/client';
-import DomainInput from './domain';
-import PathInput from './path';
-import MethodSelect from './method';
-import BodyInput from './body';
+import DomainInput from './components/domain';
+import PathInput from './components/path';
+import MethodSelect from './components/method';
+import BodyInput from './components/body';
 
 function UrlValidator() {
   const [domain, setDomain] = useState('');
   const [path, setPath] = useState('');
   const [method, setMethod] = useState('GET');
   const [body, setBody] = useState('');
-  const [isValid, setIsValid] = useState(false);
   const [message, setMessage] = useState('');
 
   const validateUrl = (event) => {
     event.preventDefault();
-    // Use a regular expression to validate the domain
     const domainRegex = /^([a-z0-9-]+\.)+[a-z]{2,}$/i;
     if (!domainRegex.test(domain)) {
-      setMessage('Invalid domain.');
+      setMessage('Invalid URL! Please recheck your URL');
       return;
     }
-
-    // Validate the path (optional)
     let formattedPath = '';
     if (path) {
       formattedPath = '/' + path.replace(' ', '/');
     }
+    let url = `${domain}${formattedPath}`;
 
-    // Validate the body (optional)
-    if (['POST', 'PUT'].includes(method) && !body) {
+    if (['GET'].includes(method) && !body) {
+      setMessage(url);
+      return;
+    }
+
+    if (['POST', 'PUT'].includes(method) && !isValidJson(body)) {
       setMessage('Error in the body.');
       return;
     }
-    if (body && !isValidJson(body)) {
-      setMessage('Invalid JSON in body.');
+    if (!isValidJson(body)) {
+      setMessage('Error in the Body of the Query Params');
       return;
     }
 
-    // If everything passes validation, construct the URL
-    const url = `${domain}${formattedPath}`;
 
-    // Send the request (optional)
-    if (['POST', 'PUT'].includes(method)) {
-      fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body
-      })
-        .then(response => response.json())
-        .then(data => {
-          setIsValid(true);
-          setMessage(`Request succeeded: ${JSON.stringify(data)}`);
-          
-        })
-        .catch(error => {
-          setIsValid(false);
-          setMessage(`Request failed: ${error.message}`);
-        });
-  
-    } else {
-      setIsValid(true);
-      setMessage( url);
+    if (method === 'GET' && body) {
+      const queryParams = new URLSearchParams(JSON.parse(body));
+      url = `${url}?${queryParams.toString()}`;
     }
-  if(isValid) console.log("success");
-  else console.log("failure");
-    
+
+    setMessage(url);
   };
 
   const isValidJson = (json) => {
@@ -94,14 +71,15 @@ function UrlValidator() {
         value={method}
         onChange={setMethod}
       />
-      
+      {['POST', 'PUT','GET'].includes(method) && (
         <BodyInput
           value={body}
           onChange={setBody}
         />
-      
-      <div data-testid="message">{message}</div>
+      )}
+        
       <button type="submit">Submit</button>
+      <div data-testid="message">{message}</div>
     </form>
   );
 }
