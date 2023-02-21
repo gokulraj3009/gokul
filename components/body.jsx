@@ -5,7 +5,8 @@ function BodyInput({ value, onChange }) {
     <div>
       <label htmlFor="body-input">Body:</label>
       <textarea
-        id="body-input"
+        data-testid="body"
+        placeholder="Enter the Query Params as an Object"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
